@@ -6,6 +6,14 @@ from tf.transformations import euler_from_quaternion
 from math import degrees
 
 class OdomMiro(object):
+    
+    def __init__(self):
+        self.posx = 0.0
+        self.posy = 0.0
+        self.yaw = 0.0
+        topic_base_name = "/" + os.getenv("MIRO_ROBOT_NAME")
+        self.subscriber = rospy.Subscriber(topic_base_name + "/sensors/odom", Odometry, self.odom_cb)
+
     def odom_cb(self, odom_data):
         orientation = odom_data.pose.pose.orientation
         position = odom_data.pose.pose.position
@@ -17,13 +25,6 @@ class OdomMiro(object):
             self.yaw = self.round(degrees(yaw), 4)
         self.posx = self.round(position.x, 4)
         self.posy = self.round(position.y, 4)
-
-    def __init__(self):
-        self.posx = 0.0
-        self.posy = 0.0
-        self.yaw = 0.0
-        topic_base_name = "/" + os.getenv("MIRO_ROBOT_NAME")
-        self.subscriber = rospy.Subscriber(topic_base_name + "/control/odom", Odometry, self.odom_cb)
 
     def round(self, value, precision):
         value = int(value * (10**precision))
