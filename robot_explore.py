@@ -32,10 +32,22 @@ class RobotExplore:
         self.min_wall = 0.2
         self.turn_angle = 0
         self.start_time = rospy.get_rostime()
+        self.start_turn = 0
+        self.explore_robot = True
 
-    # identify if wall is too near to robot or not
-    def wall_near(self):
+    # check whether to turn
+    def turn_robot(self):
+        # check if robot is in the middle of turning
+        if self.explore_robot == False:
+            if ((rospy.get_rostime().secs - self.start_turn.secs) % 60) == 0:
+                self.explore_robot = True
+            print("holy crap")
+            return True
+        # check if the wall is too near
         if self.wall_distance < self.min_wall:
+            self.start_turn = rospy.get_rostime()
+            self.explore_robot = False
+            print("lol")
             return True
         else:
             return False
@@ -44,12 +56,12 @@ class RobotExplore:
     def explore(self):
         # get time elasped
         time_elasped = rospy.get_rostime().secs - self.start_time.secs
-
+        self.wall_distance = self.robot_range.range
         # set maximum angle of turns to be 10 degrees
-        if self.wall_near == False:
+        if self.turn_robot() == False:
             if ((time_elasped % 2) == 0):
-                max_angle_turn = ((2 * np.pi)/360) * 60
-                rand_turn = np.random.randint(np.ceil(max_angle_turn * 10))/10
+                max_angle_turn = ((2 * np.pi)/360) * 80
+                rand_turn = np.random.randint(-np.ceil(max_angle_turn * 10), np.ceil(max_angle_turn * 10))/10
                 self.turn_angle = rand_turn
             self.robot_movement.set_move_cmd(linear=self.speed, angular=self.turn_angle)
             self.robot_movement.vel_publish()
