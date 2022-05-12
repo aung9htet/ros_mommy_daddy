@@ -1,12 +1,10 @@
 #!/user/bin/env python3
-#import necessary modules
-import numpy as np
 
 # Import the core Python modules for ROS and to implement ROS Actions:
 import rospy
 import numpy as np
-import time
 import miro2 as miro
+import os
 
 # import some other modules from within this package
 from child_controller import ChildMiro
@@ -25,7 +23,10 @@ class CentralControl:
         rospy.init_node('central_control')
         self.robot_child = ChildMiro()
         self.robot_parent = ParentMiro()
-        self.controller_pub = rospy.Publisher('central_controller', Action, queue_size= 10)
+        topic_base_name = "/" + os.getenv("MIRO_ROBOT_NAME")
+        self.controller_pub = rospy.Publisher(
+            topic_base_name + '/central_controller', Action, queue_size= 0
+        )
         self.action = Action()
 
         # set variables for the node
@@ -123,7 +124,8 @@ class CentralControl:
         return np.array([dx1, dy1, dx2, dy2])
     
 if __name__ == '__main__':
+    main = CentralControl()
     try:
-        central_control()
+        main.central_control()
     except rospy.ROSInterruptException:
         pass

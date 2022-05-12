@@ -10,15 +10,13 @@ class NodeDetectAudio(object):
 	def __init__(self):
 
 		topic_base_name = "/" + os.getenv("MIRO_ROBOT_NAME")
-		self.detect_sound_pub = rospy.Publisher(
-			topic_base_name + "/sensors/mics", Int16MultiArray, queue_size=0
-		)
-		self.care_sound = [0,0,0]
+		self.sound_subscriber = rospy.Subscriber(topic_base_name + "/sensors/mics", Int16MultiArray, self.detect_sound_cmd)
+		self.freq = 0
+		self.volume = 0
+		self.duration = 0
 
-	def detect_sound_cmd(self, freq = 0, volume = 0, duration = 0):
-		self.mic_receive = Int16MultiArray()
-		self.sound_detail = [freq, volume, duration]
-		self.mic_receive.data = self.sound_detail
-
-	def pub_detect_sound(self):
-		self.detect_sound_pub.publish(self.mic_receive)
+	def detect_sound_cmd(self, sound_data):
+		sound_detail = sound_data.data
+		self.freq = sound_detail[0]
+		self.volume = sound_detail[1]
+		self.duration = sound_detail[2]

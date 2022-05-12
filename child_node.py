@@ -3,12 +3,14 @@
 # Import the core Python modules for ROS and to implement ROS Actions:
 import rospy
 import miro2 as miro
+import os
 
 # Import some other modules from within this package
 from subscribe_odom import OdomMiro
 from robot_explore import RobotExplore
 from locate_april_tag import LocateTag
 from subscribe_controller import ActionMiro
+from node_detect_audio import NodeDetectAudio
 
 # Class for creating object when publishing
 class ChildPub:
@@ -22,13 +24,17 @@ class ChildNode:
     def __init__(self):
         # intialise node and required modules for project
         rospy.init('child_node')
-        self.child_pub = rospy.Publisher('child_publisher', ChildPub, queue_size= 10)
+        topic_base_name = "/" + os.getenv("MIRO_ROBOT_NAME")
+        self.child_pub = rospy.Publisher(
+            topic_base_name + 'child_publisher', ChildPub, queue_size= 0
+        )
         self.robot_pub = ChildPub()
         # subscribe to central controller
         self.sub_controller = ActionMiro()
         self.robot_explore = RobotExplore()
         self.robot_locate_tag = LocateTag()
         self.robot_odom = OdomMiro()
+        self.robot_detect_audio = NodeDetectAudio()
 
          # variables to use
         # 0 is to approach and 1 is to explore
@@ -46,8 +52,7 @@ class ChildNode:
             # check if MiRo is near the robot
             if self.robot_locate_tag.status_code == 4:
                 # Update if sound is being received
-                # Add your boolean method to check if sound is being produced here (Remove comment after job is done)
-                # self.received_sound = your method (Remove comment after job is done)
+                self.receive_sound = self.detect_sound()
                 if self.receive_sound:
                     self.robot_pub.robot_sound = True
                 else:
@@ -63,8 +68,15 @@ class ChildNode:
         # publish
         self.robot_pub.pub(self.robot_pub)
 
-    if __name__ == '__main__':
-        try:
-            child_node()
-        except rospy.ROSInterruptException:
-            pass
+    def detect_sound(self):
+        if self.robot_detect_audio.freq > 2000:
+            return True
+        else:
+            return False
+
+if __name__ == '__main__':
+    main = ChildNode()
+    try:
+        main.child_node()
+    except rospy.ROSInterruptException:
+        pass

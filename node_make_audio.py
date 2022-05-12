@@ -16,7 +16,7 @@ class NodeMakeAudio(object):
         self.sound_detail = [1000,50,250]
 
     def produce_sound(self, freq = 0, volume = 0, duration = 0):
-        self.mic_generate = UInt16MultiArray()
+        self.speaker_generate = UInt16MultiArray()
         self.sound_detail = [freq, volume, duration]
-        self.mic_generate.data = self.sound_detail
-        self.sound_pub.publish(self.mic_generate)
+        self.speaker_generate.data = self.sound_detail
+        self.sound_pub.publish(self.speaker_generate)
