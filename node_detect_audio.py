@@ -1,4 +1,4 @@
-##!/usr/bin/env python
+#!/usr/bin/env python
 import os
 import rospy
 from std_msgs.msg import Int16MultiArray
@@ -11,7 +11,7 @@ class NodeDetectAudio(object):
 
 		topic_base_name = "/" + os.getenv("MIRO_ROBOT_NAME")
 		self.detect_sound_pub = rospy.Publisher(
-			topic_base_name + "/control/tone", Int16MultiArray, queue_size=0
+			topic_base_name + "/sensors/mics", Int16MultiArray, queue_size=0
 		)
 		self.care_sound = [0,0,0]
 
