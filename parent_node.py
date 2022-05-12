@@ -62,7 +62,7 @@ class ParentNode:
             self.robot_pub.pub(self.robot_pub)
     
     if __name__ == '__main__':
-    try:
-        parent_node()
-    except rospy.ROSInterruptException:
-        pass
+        try:
+            parent_node()
+        except rospy.ROSInterruptException:
+            pass

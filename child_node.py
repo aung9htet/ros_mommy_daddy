@@ -46,7 +46,7 @@ class ChildNode:
             # check if MiRo is near the robot
             if self.robot_locate_tag.status_code == 4:
                 # Update if sound is being received
-                # Add your boolean method to check if sound is being produced here
+                # Add your boolean method to check if sound is being produced here (Remove comment after job is done)
                 # self.received_sound = your method (Remove comment after job is done)
                 if self.receive_sound:
                     self.robot_pub.robot_sound = True
@@ -64,7 +64,7 @@ class ChildNode:
         self.robot_pub.pub(self.robot_pub)
 
     if __name__ == '__main__':
-    try:
-        child_node()
-    except rospy.ROSInterruptException:
-        pass
+        try:
+            child_node()
+        except rospy.ROSInterruptException:
+            pass
