@@ -4,11 +4,12 @@
 import rospy
 import miro2 as miro
 import numpy as np
+import os
 
 # Import some other modules from within this package
 from subscribe_odom import OdomMiro
 from robot_explore import RobotExplore
-from locate_april_tag import LocateTag
+from perception.locate_april_tag import LocateTag
 from subscribe_controller import ActionMiro
 from node_make_audio import NodeMakeAudio
 from node_wag_tail import NodeWagTail

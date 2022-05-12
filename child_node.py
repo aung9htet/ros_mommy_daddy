@@ -8,7 +8,7 @@ import os
 # Import some other modules from within this package
 from subscribe_odom import OdomMiro
 from robot_explore import RobotExplore
-from locate_april_tag import LocateTag
+from perception.locate_april_tag import LocateTag
 from subscribe_controller import ActionMiro
 from node_detect_audio import NodeDetectAudio
 
@@ -26,7 +26,7 @@ class ChildNode:
         rospy.init('child_node')
         topic_base_name = "/" + os.getenv("MIRO_ROBOT_NAME")
         self.child_pub = rospy.Publisher(
-            topic_base_name + 'child_publisher', ChildPub, queue_size= 0
+            topic_base_name + '/child_publisher', ChildPub, queue_size= 0
         )
         self.robot_pub = ChildPub()
         # subscribe to central controller
