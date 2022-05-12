@@ -11,7 +11,7 @@ class Testing:
         # initialise node and required modules for the project
         rospy.init_node('testing')
         self.robot_wag = NodeWagTail()
-        self.robot_make_sound = NodeMakeAudio()
+        self.robot_make_audio = NodeMakeAudio()
         self.robot_detect_sound = NodeDetectAudio()
         
         # can be removed
@@ -25,17 +25,17 @@ class Testing:
             tail_direction = np.absolute(np.sin(self.time))
             self.robot_wag.set_wag_cmd(wag= tail_direction)
             self.robot_wag.pub_wag()
-            #self.robot_make_sound.set_sound_cmd(freq=1000, volume=50, duration=255)
-            #self.robot_make_sound.pub_sound()
+            #self.robot_make_audio.set_sound_cmd(freq=1000, volume=50, duration=255)
+            #self.robot_make_audio.pub_sound()
             print('wag bish')
 
 
     def make_sound(self):
-        self.robot_make_sound.set_sound_cmd(freq=200, volume=50, duration=1)
-        self.robot_make_sound.pub_sound()
+        self.robot_make_audio.produce_sound(freq=500, volume=255, duration=63)
+        #self.robot_make_audio.pub_sound()
 
     def detect_sound(self):
-        self.robot_detect_sound.detect_sound_cmd(freq=200, volume=50, duration=1)
+        self.robot_detect_sound.detect_sound_cmd(freq=500, volume=255, duration=63)
         self.robot_detect_sound.pub_detect_sound()
 
         
@@ -43,4 +43,4 @@ class Testing:
 if __name__ == '__main__':
     main = Testing()
     main.wag_hard()
-    main.make_sound
+    main.make_sound()
