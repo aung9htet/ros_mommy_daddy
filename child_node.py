@@ -8,27 +8,21 @@ import os
 # Import some other modules from within this package
 from subscribe_odom import OdomMiro
 from robot_explore import RobotExplore
-from perception.locate_april_tag import LocateTag
+from locate_april_tag import LocateTag
 from subscribe_controller import ActionMiro
 from node_detect_audio import NodeDetectAudio
-
-# Class for creating object when publishing
-class ChildPub:
-    def __init__(self):
-        self.pos_x = 0
-        self.pos_y = 0
-        self.robot_sound = False
+from relationship_msgs.msg import RobotPub
 
 class ChildNode:
     
     def __init__(self):
         # intialise node and required modules for project
-        rospy.init('child_node')
+        rospy.init_node('child_node')
         topic_base_name = "/" + os.getenv("MIRO_ROBOT_NAME")
         self.child_pub = rospy.Publisher(
-            topic_base_name + '/child_publisher', ChildPub, queue_size= 0
+            topic_base_name + '/child_publisher', RobotPub, queue_size= 0
         )
-        self.robot_pub = ChildPub()
+        self.robot_pub = RobotPub()
         # subscribe to central controller
         self.sub_controller = ActionMiro()
         self.robot_explore = RobotExplore()
@@ -38,35 +32,34 @@ class ChildNode:
 
          # variables to use
         # 0 is to approach and 1 is to explore
-        self.action = self.sub_controller.child.action
+        self.action = self.sub_controller.child
         self.receive_sound = False
         self.robot_pub.pos_x = self.robot_odom.posx
         self.robot_pub.pos_y = self.robot_odom.posy
 
     def child_node(self):
-        # Update actions, odom
-        self.action = self.sub_controller.child.action
-        self.robot_pub.pos_x = self.robot_odom.posx
-        self.robot_pub.pos_y = self.robot_odom.posy
-        if self.action == 0:
-            # check if MiRo is near the robot
-            if self.robot_locate_tag.status_code == 4:
-                # Update if sound is being received
+        while not rospy.is_shutdown():
+            rate = rospy.Rate(10)
+            # Update actions, odom
+            self.action = self.sub_controller.child
+            self.robot_pub.pos_x = self.robot_odom.posx
+            self.robot_pub.pos_y = self.robot_odom.posy
+            if self.action == 0:
+                # look for tag
+                self.robot_locate_tag.loop()
+                # check if sound is received
                 self.receive_sound = self.detect_sound()
                 if self.receive_sound:
                     self.robot_pub.robot_sound = True
                 else:
                     self.robot_pub.robot_sound = False
             else:
-                # Approach towards the other MiRo using the tag
-                self.robot_locate_tag.approach_miro()
+                # Exploration
+                self.robot_explore.explore()
                 self.robot_pub.robot_sound = False
-        else:
-            # Exploration
-            self.robot_explore.explore()
-            self.robot_pub.robot_sound = False
-        # publish
-        self.robot_pub.pub(self.robot_pub)
+            # publish
+            self.child_pub.publish(self.robot_pub)
+            rate.sleep()
 
     def detect_sound(self):
         if self.robot_detect_audio.freq > 2000:

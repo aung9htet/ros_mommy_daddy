@@ -79,7 +79,8 @@ class LocateTag:
         self.bookmark = 0
         self.found_tag = False
 
-        self.miro_per = mri.MiRoPerception()
+        self.status_code = 0
+
         self.tag_size = 1
         self.atp = AprilTagPerception(size=self.tag_size, family='tag36h11')
         self.sonar = RangeMiro()
@@ -179,6 +180,9 @@ class LocateTag:
             else:
                 self.status_code = 0
                 print("MiRo has lost the tag...")
+                
+    def resetStatusCode(self):
+        self.status_code = 0
 
     def loop(self):
         self.counter = 0

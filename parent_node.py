@@ -9,26 +9,23 @@ import os
 # Import some other modules from within this package
 from subscribe_odom import OdomMiro
 from robot_explore import RobotExplore
-from perception.locate_april_tag import LocateTag
+from locate_april_tag import LocateTag
 from subscribe_controller import ActionMiro
 from node_make_audio import NodeMakeAudio
 from node_wag_tail import NodeWagTail
-
-# Class for creating object when publishing
-class ParentPub:
-    def __init__(self):
-        self.pos_x = 0
-        self.pos_y = 0
-        self.robot_sound = False
+from relationship_msgs.msg import RobotPub
 
 class ParentNode:
 
     def __init__(self):
         # intialise node and required modules for project
-        rospy.init('parent_node')
+        rospy.init_node('parent_node')
         # publish the parent pub object
-        self.parent_pub = rospy.Publisher('parent_publisher', ParentPub, queue_size= 10)
-        self.robot_pub = ParentPub()
+        topic_base_name = "/" + os.getenv("MIRO_ROBOT_NAME")
+        self.parent_pub = rospy.Publisher(
+            topic_base_name + '/parent_publisher', RobotPub, queue_size= 0
+        )
+        self.robot_pub = RobotPub()
         # subscribe to central controller
         self.sub_controller = ActionMiro()
         self.robot_explore = RobotExplore()
@@ -39,38 +36,36 @@ class ParentNode:
 
         # variables to use
         # 0 is to approach and 1 is to explore
-        self.action = self.sub_controller.parent.action
+        self.action = self.sub_controller.parent
         self.produce_sound = False
         self.robot_pub.pos_x = self.robot_odom.posx
         self.robot_pub.pos_y = self.robot_odom.posy
         self.control_tail = 0
 
     def parent_node(self):
-        while rospy.is_shutdown():
+        while not rospy.is_shutdown():
+            rate = rospy.Rate(10)
             # update actions, odom
             self.control_tail += 1
-            self.action = self.sub_controller.parent.action
+            self.action = self.sub_controller.parent
             self.robot_pub.pos_x = self.robot_odom.posx
             self.robot_pub.pos_y = self.robot_odom.posy
+            # sound is not made at start
+            self.robot_pub.robot_sound = False
             if self.action == 0:
-                # check if MiRo is near the robot
-                if self.robot_locate_tag.status_code == 4:
-                    # make sound
-                    self.robot_make_audio.produce_sound(freq= 2000, volume=255, duration=(500/20))
-                    # wag tail
-                    tail_position = np.sin((self.control_tail/360)*np.pi) # sine graph of size 1 for moving tail
-                    self.robot_wag.set_wag_cmd(wag=tail_position)
-                    self.robot_pub.robot_sound = True
-                else:
-                    # approach towards the other MiRo using the tag
-                    self.robot_locate_tag.approach_miro()
-                    self.robot_pub.robot_sound = False
+                # look for tag
+                self.robot_locate_tag.loop()
+                # sound will start to be made and thus it is true
+                self.robot_pub.robot_sound = True
+                # produce sound
+                self.robot_make_audio.produce_sound(freq= 2000, volume=255, duration=(500/20))
             else:
                 # Exploration
                 self.robot_explore.explore()
                 self.robot_pub.robot_sound = False
             # publish
-            self.robot_pub.pub(self.robot_pub)
+            self.parent_pub.pub(self.robot_pub)
+            rate.sleep()
     
 if __name__ == '__main__':
     main = ParentNode()

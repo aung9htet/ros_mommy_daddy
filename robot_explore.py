@@ -15,7 +15,6 @@ class RobotExplore:
     
     def __init__(self):
         # initialise node and required modules for project
-        rospy.init_node('robot_explore')
         self.robot_movement = MoveMiro()
         self.robot_odom = OdomMiro()
         self.robot_range = RangeMiro()

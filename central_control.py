@@ -9,12 +9,7 @@ import os
 # import some other modules from within this package
 from child_controller import ChildMiro
 from parent_controller import ParentMiro
-# class for actions
-class Action:
-    def __init__(self):
-        # 0 is approach, 1 is explore
-        self.action.child = 0
-        self.action.parent = 0
+from relationship_msgs.msg import Action
 
 # focus will be set on processing the actions to be taken
 class CentralControl:
@@ -52,13 +47,16 @@ class CentralControl:
         A_approach = lambda x: np.heaviside(x,0)
         A_explore = lambda x: np.heaviside(-x,0)
 
-        while rospy.is_shutdown():
+        while not rospy.is_shutdown():
             self.time += self.h
+            rate = rospy.Rate(10)
 
             # calculate physical distance (max = 1)
-            child_position = self.robot_child.odom # Float
-            parent_position = self.robot_parent.odom # Float
-            self.dp = self.calculate_physical_distance(child_position, parent_position)
+            child_position_x = self.robot_child.pos_x # Float
+            child_position_y = self.robot_child.pos_y # Float
+            parent_position_x = self.robot_parent.pos_x # Float
+            parent_position_y = self.robot_parent.pos_y # Float
+            self.dp = self.calculate_physical_distance(child_position_x, child_position_y, parent_position_x, parent_position_y)
             if self.dp > 1:
                 self.dp = 1
 
@@ -66,11 +64,11 @@ class CentralControl:
             child_sound = self.robot_child.robot_sound # Boolean
             parent_sound = self.robot_parent.robot_sound # Boolean
             if parent_sound or child_sound:
-                if emotional_distance < 100:
-                    emotional_distance = 0
+                if self.emotional_distance < 100:
+                    self.emotional_distance = 0
             else:
-                emotional_distance += (100-emotional_distance)*0.01 
-            self.de = emotional_distance/100
+                self.emotional_distance += (100-self.emotional_distance)*0.01 
+            self.de = self.emotional_distance/100
 
             calculated_need_accumulation = [self.dx1, self.dy1, self.dx2, self.dy2]
             # Calculate needs and accumulated needs
@@ -80,27 +78,28 @@ class CentralControl:
             k4 = self.f(self.time + self.h, calculated_need_accumulation + self.h*k3)
             calculated_need_accumulation = calculated_need_accumulation + self.h*(k1 + 2*k2 + 2*k3 + k4)/6.0
             # action for child
-            if A_approach(calculated_need_accumulation[0], 'k') == 1:
+            if A_approach(calculated_need_accumulation[0]) == 1:
                 self.action.child = 0
-            elif A_explore(-calculated_need_accumulation[0], 'r') == 1:
+            elif A_explore(-calculated_need_accumulation[0]) == 1:
                 self.action.child = 1
             # action for parent
-            if A_approach(calculated_need_accumulation[2], 'k') == 1:
+            if A_approach(calculated_need_accumulation[2]) == 1:
                 self.action.parent = 0
-            elif A_explore(-calculated_need_accumulation[2], 'r') == 1:
+            elif A_explore(-calculated_need_accumulation[2]) == 1:
                 self.action.parent = 1
             # publish action for child node and parent node to use
-            self.controller_pub.pub(self.action)
+            self.controller_pub.publish(self.action)
             # update the needs and accumulated needs
-            [self.dx1,self.dy1,self.dx2,self.dy2] = calculated_need_accumulation 
+            [self.dx1,self.dy1,self.dx2,self.dy2] = calculated_need_accumulation
+            rate.sleep()
     
     # Calculate distance between two robots using odometry
-    def calculate_physical_distance(child_position, parent_position):
+    def calculate_physical_distance(self, child_position_x, child_position_y, parent_position_x, parent_position_y):
         # get from subscriber
-        x_c = child_position.pos_x
-        x_p = parent_position.pos_x
-        y_c = child_position.pos_y
-        y_p = parent_position.pos_y
+        x_c = child_position_x
+        x_p = parent_position_x
+        y_c = child_position_y
+        y_p = parent_position_y
         # calculate distance
         x = x_c - x_p
         y = y_c - y_p
