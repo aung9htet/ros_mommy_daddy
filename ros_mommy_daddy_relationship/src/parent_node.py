@@ -41,6 +41,7 @@ class ParentNode:
         self.robot_pub.pos_x = self.robot_odom.posx
         self.robot_pub.pos_y = self.robot_odom.posy
         self.control_tail = 0
+        self.start_time = rospy.get_rostime()
 
     def parent_node(self):
         while not rospy.is_shutdown():
@@ -59,6 +60,11 @@ class ParentNode:
                 self.robot_pub.robot_sound = True
                 # produce sound
                 self.robot_make_audio.produce_sound(freq= 2000, volume=255, duration=25)
+                # get time for calculating sine graph
+                time_elasped = rospy.get_rostime().secs - self.start_time.secs
+                tail_value = np.sin((time_elasped*10)+((np.pi*2)/360))
+                # wag tail
+                self.robot_wag(wag=tail_value)
             else:
                 # Exploration
                 self.robot_explore.explore()

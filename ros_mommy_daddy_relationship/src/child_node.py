@@ -10,6 +10,7 @@ from subscribe_odom import OdomMiro
 from robot_explore import RobotExplore
 from locate_april_tag import LocateTag
 from subscribe_controller import ActionMiro
+from node_wag_tail import NodeWagTail
 from node_detect_audio import NodeDetectAudio
 from ros_mommy_daddy_msg.msg import RobotPub
 
@@ -29,6 +30,7 @@ class ChildNode:
         self.robot_locate_tag = LocateTag()
         self.robot_odom = OdomMiro()
         self.robot_detect_audio = NodeDetectAudio()
+        self.robot_wag = NodeWagTail()
 
         # variables to use
         # 0 is to approach and 1 is to explore
@@ -36,6 +38,7 @@ class ChildNode:
         self.robot_pub.robot_sound = False
         self.robot_pub.pos_x = self.robot_odom.posx
         self.robot_pub.pos_y = self.robot_odom.posy
+        self.start_time = rospy.get_rostime()
 
     def child_node(self):
         while not rospy.is_shutdown():
@@ -53,6 +56,11 @@ class ChildNode:
                     self.robot_pub.robot_sound = True
                 else:
                     self.robot_pub.robot_sound = False
+                # get time for calculating sine graph
+                time_elasped = rospy.get_rostime().secs - self.start_time.secs
+                tail_value = np.sin((time_elasped*10)+((np.pi*2)/360))
+                # wag tail
+                self.robot_wag(wag=tail_value)
             else:
                 # Exploration
                 self.robot_explore.explore()

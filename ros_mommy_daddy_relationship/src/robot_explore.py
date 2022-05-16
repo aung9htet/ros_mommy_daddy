@@ -69,7 +69,7 @@ class RobotExplore:
         else:
             print("rotate")
             angle_turn = (np.pi/2)/3 * 2
-            self.robot_movement.set_move_cmd(linear=self.speed, angular=angle_turn)
+            self.robot_movement.set_move_cmd(linear=0, angular=angle_turn)
             self.robot_movement.vel_publish()
                 
     def exploration(self):
