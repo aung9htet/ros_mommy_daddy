@@ -1,3 +1,3 @@
-float32 pos_x
-float32 pos_y
+float64 pos_x
+float64 pos_y
 bool robot_sound

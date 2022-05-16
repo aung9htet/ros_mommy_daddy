@@ -11,8 +11,7 @@ from robot_explore import RobotExplore
 from locate_april_tag import LocateTag
 from subscribe_controller import ActionMiro
 from node_detect_audio import NodeDetectAudio
-#from ros_mommy_daddy_msg.msg import RobotPub
-from std_msgs.msg import Float32MultiArray
+from ros_mommy_daddy_msg.msg import RobotPub
 
 class ChildNode:
     
@@ -21,11 +20,9 @@ class ChildNode:
         rospy.init_node('child_node')
         topic_base_name = "/" + os.getenv("MIRO_ROBOT_NAME")
         self.child_pub = rospy.Publisher(
-            #topic_base_name + '/child_publisher', RobotPub, queue_size= 0
-            topic_base_name + '/child_publisher', Float32MultiArray, queue_size= 0
+            topic_base_name + '/child_publisher', RobotPub, queue_size= 0
         )
-        #self.robot_pub = RobotPub()
-        self.robot_pub = Float32MultiArray()
+        self.robot_pub = RobotPub()
         # subscribe to central controller
         self.sub_controller = ActionMiro()
         self.robot_explore = RobotExplore()
@@ -33,39 +30,33 @@ class ChildNode:
         self.robot_odom = OdomMiro()
         self.robot_detect_audio = NodeDetectAudio()
 
-         # variables to use
+        # variables to use
         # 0 is to approach and 1 is to explore
         self.action = self.sub_controller.child
-        #self.receive_sound = False
-        #self.robot_pub.pos_x = self.robot_odom.posx
-        #self.robot_pub.pos_y = self.robot_odom.posy
-        self.robot_pub.data = [self.robot_odom.posx, self.robot_odom.posy, 0]
+        self.robot_pub.robot_sound = False
+        self.robot_pub.pos_x = self.robot_odom.posx
+        self.robot_pub.pos_y = self.robot_odom.posy
 
     def child_node(self):
         while not rospy.is_shutdown():
             rate = rospy.Rate(10)
             # Update actions, odom
             self.action = self.sub_controller.child
-            #self.robot_pub.pos_x = self.robot_odom.posx
-            #self.robot_pub.pos_y = self.robot_odom.posy
-            self.robot_pub.data[0] = self.robot_odom.posx
-            self.robot_pub.data[1] = self.robot_odom.posy
+            self.robot_pub.pos_x = self.robot_odom.posx
+            self.robot_pub.pos_y = self.robot_odom.posy
             if self.action == 0:
                 # look for tag
                 self.robot_locate_tag.loop()
                 # check if sound is received
-                self.receive_sound = self.detect_sound()
-                if self.receive_sound:
-                    #self.robot_pub.robot_sound = True
-                    self.robot_pub.data[2] = 1
+                self.robot_pub.robot_sound = self.detect_sound()
+                if self.robot_pub.robot_sound:
+                    self.robot_pub.robot_sound = True
                 else:
-                    #self.robot_pub.robot_sound = False
-                    self.robot_pub.data[2] = 0
+                    self.robot_pub.robot_sound = False
             else:
                 # Exploration
                 self.robot_explore.explore()
-                #self.robot_pub.robot_sound = False
-                self.robot_pub.data[2] = 0
+                self.robot_pub.robot_sound = False
             # publish
             self.child_pub.publish(self.robot_pub)
             rate.sleep()

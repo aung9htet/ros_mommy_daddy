@@ -1,2 +1,2 @@
-int32 child
-int32 parent
+int64 child
+int64 parent

@@ -9,8 +9,7 @@ import os
 # import some other modules from within this package
 from child_controller import ChildMiro
 from parent_controller import ParentMiro
-from std_msgs.msg import Int16MultiArray
-#from ros_mommy_daddy_msg.msg import Action
+from ros_mommy_daddy_msg.msg import Action
 
 # focus will be set on processing the actions to be taken
 class CentralControl:
@@ -21,11 +20,9 @@ class CentralControl:
         self.robot_child = ChildMiro()
         self.robot_parent = ParentMiro()
         self.controller_pub = rospy.Publisher(
-            #'/central_controller', Action, queue_size= 0
-            '/central_controller', Int16MultiArray, queue_size= 0
+            '/central_controller', Action, queue_size= 0
         )
-        #self.action = Action
-        self.action = Int16MultiArray()
+        self.action = Action()
 
         # set variables for the node
         self.time = 0
@@ -43,7 +40,8 @@ class CentralControl:
         self.dp = 0.0
         self.de = 0.0
         self.h = 0.005
-        self.action.data = [0,0]
+        self.action.child = 0
+        self.action.parent = 0
 
     def central_control(self):
         # action selection variables, do each aciton when the variable is equal to 1
@@ -82,18 +80,14 @@ class CentralControl:
             calculated_need_accumulation = calculated_need_accumulation + self.h*(k1 + 2*k2 + 2*k3 + k4)/6.0
             # action for child
             if A_approach(calculated_need_accumulation[0]) == 1:
-                #self.action.child = 0
-                self.action.data[0] = 0
+                self.action.child = 0
             elif A_explore(-calculated_need_accumulation[0]) == 1:
-                #self.action.child = 1
-                self.action.data[0] = 0
+                self.action.child = 1
             # action for parent
             if A_approach(calculated_need_accumulation[2]) == 1:
-                #self.action.parent = 1
-                self.action.data[1] = 0
+                self.action.parent = 0
             elif A_explore(-calculated_need_accumulation[2]) == 1:
-                #self.action.parent = 1
-                self.action.data[1] = 1
+                self.action.parent = 1
             # publish action for child node and parent node to use
             self.controller_pub.publish(self.action)
             # update the needs and accumulated needs
