@@ -10,7 +10,7 @@ class ChildMiro(object):
         self.pos_y = 0
         self.robot_sound = False
         self.subscriber = rospy.Subscriber(
-            "/child/child_publisher", RobotPub, self.child_cb
+            "/david/child_publisher", RobotPub, self.child_cb
         )
 
     def child_cb(self, action_data):
