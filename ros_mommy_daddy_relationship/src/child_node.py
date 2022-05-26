@@ -4,6 +4,7 @@
 import rospy
 import miro2 as miro
 import os
+import numpy as np
 
 # Import some other modules from within this package
 from subscribe_odom import OdomMiro
@@ -31,6 +32,7 @@ class ChildNode:
         self.robot_odom = OdomMiro()
         self.robot_detect_audio = NodeDetectAudio()
         self.robot_wag = NodeWagTail()
+        self.robot_found = False
 
         # variables to use
         # 0 is to approach and 1 is to explore
@@ -49,7 +51,8 @@ class ChildNode:
             self.robot_pub.pos_y = self.robot_odom.posy
             if self.action == 0:
                 # look for tag
-                self.robot_locate_tag.loop()
+                if self.robot_found == False:
+                    self.robot_found = self.robot_locate_tag.loop()
                 # check if sound is received
                 self.robot_pub.robot_sound = self.detect_sound()
                 if self.robot_pub.robot_sound:
@@ -60,8 +63,10 @@ class ChildNode:
                 time_elasped = rospy.get_rostime().secs - self.start_time.secs
                 tail_value = np.sin((time_elasped*10)+((np.pi*2)/360))
                 # wag tail
-                self.robot_wag(wag=tail_value)
+                self.robot_wag.set_wag_cmd(wag=tail_value)
+                self.robot_wag.pub_wag()
             else:
+                self.robot_found = False
                 # Exploration
                 self.robot_explore.explore()
                 self.robot_pub.robot_sound = False

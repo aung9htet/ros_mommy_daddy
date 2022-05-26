@@ -175,7 +175,7 @@ class LocateTag:
             #if in right camera turn right
             elif not self.tag[0] and  self.tag[1]:
                 self.drive(0.2, 0)
-            elif self.sonar.range < 0.30:
+            elif self.sonar.range < 0.25:
                 self.status_code = 3
             else:
                 self.status_code = 0
@@ -185,24 +185,20 @@ class LocateTag:
         self.status_code = 0
 
     def loop(self):
-        self.counter = 0
-        self.status_code = 0
-        
-        while not rospy.core.is_shutdown():
-            if self.status_code == 1:
-                print("looking for Tag")
-                self.lookForTag()
-            elif self.status_code == 2:
-                print("MiRo is Approaching the tag")
-                self.approach()
-            elif self.status_code == 3:
-                print("MiRo has Found the Tag!!")
-                self.drive(0, 0)
-                break
-            else:
-                self.status_code = 1
-
-            rospy.sleep(self.TICK)
+        if self.status_code == 1:
+            print("looking for Tag")
+            self.lookForTag()
+        elif self.status_code == 2:
+            print("MiRo is Approaching the tag")
+            self.approach()
+        elif self.status_code == 3:
+            print("MiRo has Found the Tag!!")
+            self.drive(0, 0)
+            self.status_code = 0
+            return True
+        else:
+            self.status_code = 1
+        return False
 
 
 if __name__ == "__main__":

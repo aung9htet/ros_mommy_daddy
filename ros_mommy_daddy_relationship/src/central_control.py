@@ -33,7 +33,7 @@ class CentralControl:
         self.dy2 = 0.0
         self.emotional_distance = 0
         self.epsilonAv = 0.0
-        self.epsilonAm = 0.0
+        self.epsilonAm = 0.9
         self.a = 1.0
         self.c = 1.0
         self.b = 0.5
@@ -44,13 +44,13 @@ class CentralControl:
         self.action.parent = 0
 
     def central_control(self):
-        # action selection variables, do each aciton when the variable is equal to 1
+        # action selection variables, do each action when the variable is equal to 1
         A_approach = lambda x: np.heaviside(x,0)
         A_explore = lambda x: np.heaviside(-x,0)
 
         while not rospy.is_shutdown():
             self.time += self.h
-            rate = rospy.Rate(10)
+            rate = rospy.Rate(10000)
 
             # calculate physical distance (max = 1)
             child_position_x = self.robot_child.pos_x # Float
@@ -79,19 +79,14 @@ class CentralControl:
             k4 = self.f(self.time + self.h, calculated_need_accumulation + self.h*k3)
             calculated_need_accumulation = calculated_need_accumulation + self.h*(k1 + 2*k2 + 2*k3 + k4)/6.0
             # action for child
-            if A_approach(calculated_need_accumulation[0]) == 1:
-                self.action.child = 0
-            elif A_explore(-calculated_need_accumulation[0]) == 1:
-                self.action.child = 1
+            self.action.child = int(A_explore(calculated_need_accumulation[0]))
             # action for parent
-            if A_approach(calculated_need_accumulation[2]) == 1:
-                self.action.parent = 0
-            elif A_explore(-calculated_need_accumulation[2]) == 1:
-                self.action.parent = 1
+            self.action.parent = int(A_explore(calculated_need_accumulation[2]))
             # publish action for child node and parent node to use
             self.controller_pub.publish(self.action)
             # update the needs and accumulated needs
             [self.dx1,self.dy1,self.dx2,self.dy2] = calculated_need_accumulation
+            print(calculated_need_accumulation[0], calculated_need_accumulation[2], self.action.child, self.action.parent)
             rate.sleep()
     
     # Calculate distance between two robots using odometry
