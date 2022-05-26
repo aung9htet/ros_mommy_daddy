@@ -60,7 +60,8 @@ class ChildNode:
                 time_elasped = rospy.get_rostime().secs - self.start_time.secs
                 tail_value = np.sin((time_elasped*10)+((np.pi*2)/360))
                 # wag tail
-                self.robot_wag(wag=tail_value)
+                self.robot_wag.set_wag_cmd(wag=tail_value)
+                self.robot_wag.pub_wag()
             else:
                 # Exploration
                 self.robot_explore.explore()

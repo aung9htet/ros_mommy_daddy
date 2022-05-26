@@ -42,10 +42,12 @@ class ParentNode:
         self.robot_pub.pos_y = self.robot_odom.posy
         self.control_tail = 0
         self.start_time = rospy.get_rostime()
+        self.robot_found = False
 
     def parent_node(self):
-        while not rospy.is_shutdown():
-            rate = rospy.Rate(10)
+        rate = rospy.Rate(500)
+
+        while not rospy.is_shutdown():            
             # update actions, odom
             self.control_tail += 1
             self.action = self.sub_controller.parent
@@ -53,9 +55,12 @@ class ParentNode:
             self.robot_pub.pos_y = self.robot_odom.posy
             # sound is not made at start
             self.robot_pub.robot_sound = False
+            rospy.loginfo(self.action)
             if self.action == 0:
+                rospy.loginfo("wagging")
                 # look for tag
-                self.robot_locate_tag.loop()
+                if self.robot_found == False:
+                    self.robot_found = self.robot_locate_tag.loop()
                 # sound will start to be made and thus it is true
                 self.robot_pub.robot_sound = True
                 # produce sound
@@ -64,14 +69,18 @@ class ParentNode:
                 time_elasped = rospy.get_rostime().secs - self.start_time.secs
                 tail_value = np.sin((time_elasped*10)+((np.pi*2)/360))
                 # wag tail
-                self.robot_wag(wag=tail_value)
+                self.robot_wag.set_wag_cmd(wag=tail_value)
+                self.robot_wag.pub_wag()
             else:
-                # Exploration
+                self.robot_found = False
+            # Exploration
+                rospy.loginfo("exploring")
                 self.robot_explore.explore()
                 self.robot_pub.robot_sound = False
-            # publish
-            self.parent_pub.publish(self.robot_pub)
-            rate.sleep()
+                # publish
+                rospy.loginfo("publishing")
+                self.parent_pub.publish(self.robot_pub)
+                rate.sleep()
     
 if __name__ == '__main__':
     main = ParentNode()

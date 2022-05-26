@@ -1,0 +1,40 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="tag">
+    <static>true</static>
+    <link name="link">
+      <collision name="surface">
+        <pose>0 0 1.0 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1.5 0.8 0.03</size>
+          </box>
+        </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>0.6</mu>
+              <mu2>0.6</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <visual name="visual1">
+        <pose>0 0 1.0 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1.5 0.8 0.03</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://miro_tag/materials/scripts</uri>
+            <uri>model://miro_tag/materials/textures</uri>
+            <name>miro_tag/Diffuse</name>
+          </script>
+        </material>
+      </visual>
+
+    </link>
+  </model>
+</sdf>
