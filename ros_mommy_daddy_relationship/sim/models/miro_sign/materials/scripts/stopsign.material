@@ -1,0 +1,29 @@
+material Mirosign/Diffuse
+{
+  receive_shadows off
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture MiroSign_Diffuse.png
+      }
+    }
+  }
+}
+
+material Mirosign/Specular
+{
+  receive_shadows off
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture MiroSign_Spec.png
+      }
+    }
+  }
+}

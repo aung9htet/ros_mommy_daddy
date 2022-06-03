@@ -1,0 +1,2 @@
+float64 ambivalent
+float64 avoidant

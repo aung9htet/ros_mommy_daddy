@@ -27,8 +27,8 @@ class RobotExplore:
         self.wall_distance = self.robot_range.range
         
         # set variables for project
-        self.speed = 0.4
-        self.min_wall = 0.5
+        self.speed = 5.0
+        self.min_wall = 0.12
         self.turn_angle = 0
         self.start_time = rospy.get_rostime()
         self.explore_robot = True
