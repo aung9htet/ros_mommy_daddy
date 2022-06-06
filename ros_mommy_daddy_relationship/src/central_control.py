@@ -56,7 +56,7 @@ class CentralControl:
 
         while not rospy.is_shutdown():
             self.time += self.h
-            rate = rospy.Rate(10)
+            rate = rospy.Rate(10000)
 
             # set the avoidant and ambivalent
             self.epsilonAv = self.emotion.ambivalent
