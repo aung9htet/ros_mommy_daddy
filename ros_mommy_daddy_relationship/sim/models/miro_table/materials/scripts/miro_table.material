@@ -1,0 +1,15 @@
+material miro_table/Diffuse
+{
+  receive_shadows off
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture table_texture.png
+        rotate 90
+      }
+    }
+  }
+}

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 import rospy
 from std_msgs.msg import Float32MultiArray
@@ -12,7 +12,6 @@ class NodeWagTail(object):
         self.wag_pub = rospy.Publisher(
             topic_base_name + "/control/cosmetic_joints", Float32MultiArray, queue_size=0
         )
-        print("I am wagging!")
 
     # Making tail wag and ears move
     def set_wag_cmd(self, droop=0.0, wag=1.0, eyel=0.0, eyer=0.0, earl=1.0, earr=1.0):

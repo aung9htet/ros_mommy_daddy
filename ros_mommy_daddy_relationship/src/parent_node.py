@@ -5,6 +5,7 @@ import rospy
 import miro2 as miro
 import numpy as np
 import os
+from datetime import datetime
 
 # Import some other modules from within this package
 from subscribe_odom import OdomMiro
@@ -42,20 +43,32 @@ class ParentNode:
         self.robot_pub.pos_y = self.robot_odom.posy
         self.control_tail = 0
         self.start_time = rospy.get_rostime()
+        self.robot_found = False
+        self.odom_record = np.empty((0,2), float)
+        rospy.on_shutdown(self.save_file)
 
     def parent_node(self):
-        while not rospy.is_shutdown():
-            rate = rospy.Rate(10)
+        rate = rospy.Rate(10)
+
+        while not rospy.is_shutdown():            
             # update actions, odom
             self.control_tail += 1
             self.action = self.sub_controller.parent
             self.robot_pub.pos_x = self.robot_odom.posx
             self.robot_pub.pos_y = self.robot_odom.posy
+
+            # record robot odom pos as an np array
+            robot_pos = np.array([np.array([self.robot_pub.pos_x, self.robot_pub.pos_y])])
+            self.odom_record = np.append(self.odom_record, robot_pos, axis = 0)
+
             # sound is not made at start
             self.robot_pub.robot_sound = False
+            rospy.loginfo(self.action)
             if self.action == 0:
+                rospy.loginfo("wagging")
                 # look for tag
-                self.robot_locate_tag.loop()
+                if self.robot_found == False:
+                    self.robot_found = self.robot_locate_tag.loop()
                 # sound will start to be made and thus it is true
                 self.robot_pub.robot_sound = True
                 # produce sound
@@ -64,15 +77,26 @@ class ParentNode:
                 time_elasped = rospy.get_rostime().secs - self.start_time.secs
                 tail_value = np.sin((time_elasped*10)+((np.pi*2)/360))
                 # wag tail
-                self.robot_wag(wag=tail_value)
+                self.robot_wag.set_wag_cmd(wag=tail_value)
+                self.robot_wag.pub_wag()
             else:
-                # Exploration
+                self.robot_found = False
+            # Exploration
+                rospy.loginfo("exploring")
                 self.robot_explore.explore()
                 self.robot_pub.robot_sound = False
-            # publish
+                # publish
+                rospy.loginfo("publishing")
             self.parent_pub.publish(self.robot_pub)
+            rospy.loginfo(os.getcwd())
             rate.sleep()
-    
+
+    def save_file(self):
+        current_time = datetime.now()
+        date_time = current_time.strftime("%m-%d-%Y_%H-%M-%S")
+        file_name = "../mdk/catkin_ws/src/ros_mommy_daddy/ros_mommy_daddy_relationship/odom_data/parent_odom_data_" + date_time + ".npy"
+        np.save(file_name, np.asarray(self.odom_record))
+
 if __name__ == '__main__':
     main = ParentNode()
     try:
