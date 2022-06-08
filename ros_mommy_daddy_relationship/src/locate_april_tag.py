@@ -86,6 +86,11 @@ class LocateTag:
         self.sonar = RangeMiro()
         self.reset_head_pose()
 
+        # set tag for exploration
+        self.init_tag = 3
+        self.curr_tag = self.init_tag
+        self.explore_found = False
+
 
     def reset_head_pose(self):
         """
@@ -139,14 +144,18 @@ class LocateTag:
         self.vel_pub.publish(msg_cmd_vel)
 
 
-    def lookForTag(self):
+    def lookForTag(self, index = None):
 
         if self.just_switched:
             self.just_switched = False
 
-        for index in range(2):
-            if not self.new_frame[index]:
-                continue
+        if index == None:
+            for index in range(2):
+                if not self.new_frame[index]:
+                    continue
+                image = self.input_camera[index]
+                self.tag[index] = self.atp.detect_tags(image)
+        else:
             image = self.input_camera[index]
             self.tag[index] = self.atp.detect_tags(image)
 
@@ -184,10 +193,10 @@ class LocateTag:
     def resetStatusCode(self):
         self.status_code = 0
 
-    def loop(self):
+    def loop(self, index = None):
         if self.status_code == 1:
             print("looking for Tag")
-            self.lookForTag()
+            self.lookForTag(index)
         elif self.status_code == 2:
             print("MiRo is Approaching the tag")
             self.approach()
@@ -199,6 +208,26 @@ class LocateTag:
         else:
             self.status_code = 1
         return False
+
+    # go around specific tag
+    # return true, do some action
+    # return false, do nothingg
+    def explore_tags(self, max = 5, rand = True):
+        select_index = list(range(self.init_tag, max + 1))
+        if self.explore_found == True:
+            if self.curr_tag >= 5:
+                self.curr_tag = self.init_tag
+            else:
+                if rand == True:
+                    select_index.remove(self.curr_tag)
+                    self.curr_tag = np.random.choice(select_index)
+                else:
+                    self.curr_tag += 1
+            self.explore_found = False
+            return True
+        else:
+            self.explore_found = self.loop(self.curr_tag)
+            return False
 
 
 if __name__ == "__main__":

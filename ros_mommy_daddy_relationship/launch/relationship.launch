@@ -6,10 +6,12 @@
 <!-- The football_pitch world has 3 MiRos, named miro01, miro02 and miro03 -->
 <!-- The launch file shows how to load a script to control each MiRo by locally changing the MIRO_ROBOT_NAME variable and putting the node in the corresponding namespace -->
 <launch>
+
   <!-- Child -->
   <env name="MIRO_ROBOT_NAME" value="miro" />
   <node ns="miro" name="miro_node" pkg="ros_mommy_daddy_relationship" type="child_node.py" />
   
+
   <!-- Parent -->
   <env name="MIRO_ROBOT_NAME" value="david" />
   <node ns="david" name="david_node" pkg="ros_mommy_daddy_relationship" type="parent_node.py" />

@@ -32,6 +32,11 @@ class RobotExplore:
         self.turn_angle = 0
         self.start_time = rospy.get_rostime()
         self.explore_robot = True
+        check_dir = np.random.randint(1, 3)
+        if check_dir == 1:
+            self.angle_turn = (np.pi/2)/3 * 2
+        else:
+            self.angle_turn = -(np.pi/2)/3 * 2
 
     # check whether to turn
     def turn_robot(self):
@@ -68,8 +73,13 @@ class RobotExplore:
             self.robot_movement.vel_publish()
         else:
             print("rotate")
-            angle_turn = (np.pi/2)/3 * 2
-            self.robot_movement.set_move_cmd(linear=0, angular=angle_turn)
+            check_dir = np.random.randint(1, 3)
+            if ((time_elasped % 5) == 0):
+                if check_dir == 1:
+                    self.angle_turn = (np.pi/2)/3 * 2
+                else:
+                    self.angle_turn = -(np.pi/2)/3 * 2
+            self.robot_movement.set_move_cmd(linear=0, angular=self.angle_turn)
             self.robot_movement.vel_publish()
                 
     def exploration(self):

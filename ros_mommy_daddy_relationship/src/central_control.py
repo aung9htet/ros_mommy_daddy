@@ -31,8 +31,8 @@ class CentralControl:
         # x is needs, y is accumulated needs, 1 is child, 2 is parent
         self.dx1 = -1.0
         self.dy1 = 1.0
-        self.dx2 = 0.0
-        self.dy2 = 0.0
+        self.dx2 = -1.0
+        self.dy2 = 1.0
         self.emotional_distance = 0
         self.epsilonAv = self.emotion.ambivalent
         self.epsilonAm = self.emotion.avoidant
@@ -56,7 +56,7 @@ class CentralControl:
 
         while not rospy.is_shutdown():
             self.time += self.h
-            rate = rospy.Rate(10000)
+            rate = rospy.Rate(10)
 
             # set the avoidant and ambivalent
             self.epsilonAv = self.emotion.ambivalent

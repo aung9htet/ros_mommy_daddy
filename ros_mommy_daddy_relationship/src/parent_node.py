@@ -44,10 +44,10 @@ class ParentNode:
         self.control_tail = 0
         self.start_time = rospy.get_rostime()
         self.robot_found = False
-        self.odom_record = np.empty((0,2), float)
+        self.odom_record = np.empty((0,3), float)
         rospy.on_shutdown(self.save_file)
 
-    def parent_node(self):
+    def parent_node(self, explore_tag = False):
         rate = rospy.Rate(10)
 
         while not rospy.is_shutdown():            
@@ -56,10 +56,6 @@ class ParentNode:
             self.action = self.sub_controller.parent
             self.robot_pub.pos_x = self.robot_odom.posx
             self.robot_pub.pos_y = self.robot_odom.posy
-
-            # record robot odom pos as an np array
-            robot_pos = np.array([np.array([self.robot_pub.pos_x, self.robot_pub.pos_y])])
-            self.odom_record = np.append(self.odom_record, robot_pos, axis = 0)
 
             # sound is not made at start
             self.robot_pub.robot_sound = False
@@ -80,15 +76,35 @@ class ParentNode:
                 self.robot_wag.set_wag_cmd(wag=tail_value)
                 self.robot_wag.pub_wag()
             else:
-                self.robot_found = False
-            # Exploration
-                rospy.loginfo("exploring")
-                self.robot_explore.explore()
-                self.robot_pub.robot_sound = False
-                # publish
-                rospy.loginfo("publishing")
+                if explore_tag == False:
+                    self.robot_found = False
+                    # Exploration
+                    self.robot_explore.explore()
+                    self.robot_pub.robot_sound = False
+                else:
+                    response = self.robot_explore.explore_tags()
+                    if response == True:
+                        # do something
+                        time_elasped = rospy.get_rostime().secs - self.start_time.secs
+                        while (time_elasped % 4) > 0:
+                            # get time for calculating sine graph
+                            time_elasped = rospy.get_rostime().secs - self.start_time.secs
+                            tail_value = np.sin((time_elasped*10)+((np.pi*2)/360))
+                            # wag tail
+                            self.robot_wag.set_wag_cmd(wag=tail_value)
+                            self.robot_wag.pub_wag()
+            
+            # publish
             self.parent_pub.publish(self.robot_pub)
             rospy.loginfo(os.getcwd())
+
+            # record robot odom pos as an np array
+            if self.robot_found == True:
+                robot_pos = np.array([np.array([self.robot_pub.pos_x, self.robot_pub.pos_y, 1])])
+            else:
+                robot_pos = np.array([np.array([self.robot_pub.pos_x, self.robot_pub.pos_y, 0])])
+            self.odom_record = np.append(self.odom_record, robot_pos, axis = 0)
+
             rate.sleep()
 
     def save_file(self):

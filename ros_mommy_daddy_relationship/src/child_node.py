@@ -42,10 +42,11 @@ class ChildNode:
         self.robot_pub.pos_x = self.robot_odom.posx
         self.robot_pub.pos_y = self.robot_odom.posy
         self.start_time = rospy.get_rostime()
-        self.odom_record = np.empty((0,2), float)
+        self.odom_record = np.empty((0,3), float)
         rospy.on_shutdown(self.save_file)
+        self.tag = 3
 
-    def child_node(self):
+    def child_node(self, explore_tag = False):
         while not rospy.is_shutdown():
             rate = rospy.Rate(10)
 
@@ -53,10 +54,6 @@ class ChildNode:
             self.action = self.sub_controller.child
             self.robot_pub.pos_x = self.robot_odom.posx
             self.robot_pub.pos_y = self.robot_odom.posy
-
-            # record robot odom pos as a tuple
-            robot_pos = np.array([np.array([self.robot_pub.pos_x, self.robot_pub.pos_y])])
-            self.odom_record = np.append(self.odom_record, robot_pos, axis = 0)
 
             # proceed on actions
             if self.action == 0:
@@ -76,14 +73,37 @@ class ChildNode:
                 self.robot_wag.set_wag_cmd(wag=tail_value)
                 self.robot_wag.pub_wag()
             else:
-                self.robot_found = False
-                # Exploration
-                self.robot_explore.explore()
-                self.robot_pub.robot_sound = False
+                if explore_tag == False:
+                    self.robot_found = False
+                    # Exploration
+                    self.robot_explore.explore()
+                    self.robot_pub.robot_sound = False
+                else:
+                    response = self.robot_explore.explore_tags()
+                    if response == True:
+                        # do something
+                        time_elasped = rospy.get_rostime().secs - self.start_time.secs
+                        while (time_elasped % 4) > 0:
+                            # get time for calculating sine graph
+                            time_elasped = rospy.get_rostime().secs - self.start_time.secs
+                            tail_value = np.sin((time_elasped*10)+((np.pi*2)/360))
+                            # wag tail
+                            self.robot_wag.set_wag_cmd(wag=tail_value)
+                            self.robot_wag.pub_wag()
+                        
             # publish
             self.child_pub.publish(self.robot_pub)
             rospy.loginfo(os.getcwd())
+
+            # record robot odom pos as a tuple
+            if self.robot_found == True:
+                robot_pos = np.array([np.array([self.robot_pub.pos_x, self.robot_pub.pos_y, 1])])
+            else:
+                robot_pos = np.array([np.array([self.robot_pub.pos_x, self.robot_pub.pos_y, 0])])
+            self.odom_record = np.append(self.odom_record, robot_pos, axis = 0)
+
             rate.sleep()
+
 
     def detect_sound(self):
         if self.robot_detect_audio.freq > 2000:
