@@ -3,6 +3,7 @@
 # for plotting
 import matplotlib.pyplot as plt
 from matplotlib import style
+import cv2
 import numpy as np
 from matplotlib.widgets import Slider, Button
 
@@ -20,22 +21,33 @@ class PlotGraph:
 
         # for plot
         fig = plt.figure()
-        self.child_action = fig.add_subplot(3,2,1)
+        fig.suptitle('MiRos Strange Situation', fontweight="bold", fontsize=18)
+        self.path = "image/miro.png"
+        self.img = cv2.imread(self.path)
+        self.miro_pic = fig.add_subplot(3,2,1)
+        self.miro_pic.axis('off')
+        self.e_d_p_d = fig.add_subplot(3,2,2)
+        self.e_d_p_d.title.set_text("Emotional and Physical Distance")
+        self.e_d_p_d.set_ylim(0, 1)
+        self.child_action = fig.add_subplot(3,2,3)
         self.child_action.title.set_text("Child Action")
-        self.parent_action = fig.add_subplot(3,2,2)
+        self.child_action.set_xlim(0,1000)
+        self.child_action.get_xaxis().set_visible(False)
+        self.parent_action = fig.add_subplot(3,2,4)
         self.parent_action.title.set_text("Parent Action")
-        self.pe = fig.add_subplot(3,2,3)
-        self.pe.title.set_text("Emotional distance")
-        self.pd = fig.add_subplot(3,2,4)
-        self.pd.title.set_text("Physical distance")
+        self.parent_action.set_xlim(0,1000)
+        self.parent_action.set_ylim(-0.2, 1.2)
+        self.parent_action.get_xaxis().set_visible(False)
         self.child_need = fig.add_subplot(3,2,5)
         self.child_need.title.set_text("Child need")
+        self.child_need.set_xlim(0,1000)
+        self.child_need.get_xaxis().set_visible(False)
         self.parent_need = fig.add_subplot(3,2,6)
         self.parent_need.title.set_text("Parent need")
+        self.parent_need.set_xlim(0,1000)
+        self.parent_need.get_xaxis().set_visible(False)
         self.child_action_data = []
         self.parent_action_data = []
-        self.pe_data = []
-        self.pd_data = []
         self.child_need_data = []
         self.parent_need_data = []
 
@@ -97,18 +109,51 @@ class PlotGraph:
             self.Av_slider.on_changed(self.update)
             self.button.on_clicked(self.reset)
             self.child_action_data.append(float(self.sub_controller.child))
+            if len(self.child_action_data) > 1000:
+                self.child_action_data.pop(0)
             self.parent_action_data.append(float(self.sub_controller.parent))
-            self.pe_data.append(float(self.sub_controller.emotional_distance))
-            self.pd_data.append(float(self.sub_controller.physical_distance))
+            if len(self.parent_action_data) > 1000:
+                self.parent_action_data.pop(0)
             self.child_need_data.append(float(self.sub_controller.child_need))
+            if len(self.child_need_data) > 1000:
+                self.child_need_data.pop(0)
             self.parent_need_data.append(float(self.sub_controller.parent_need))
+            if len(self.parent_need_data) > 1000:
+                self.parent_need_data.pop(0)
 
-            self.child_action.plot(self.child_action_data, color = "red")
-            self.parent_action.plot(self.parent_action_data, color = "red")
-            self.pe.plot(self.pe_data, color = "red")
-            self.pd.plot(self.pd_data, color = "red")
-            self.child_need.plot(self.child_need_data, color = "red")
-            self.parent_need.plot(self.parent_need_data, color = "red")
+            #self.miro_pic.imshow(self.img)
+            self.pe = float(self.sub_controller.emotional_distance)
+            self.pd = float(self.sub_controller.physical_distance)
+            data = {"Emotional Distance": self.pe, "Physical Distance": self.pd}
+            distances = list(data.keys())
+            values = list(data.values())
+            barlist = self.e_d_p_d.bar(distances, values, width = 0.4)
+            barlist[0].set_color('maroon')
+            barlist[1].set_color('blue')
+            self.parent_action.clear()
+            self.parent_action.set_xlim(0,1000)
+            self.parent_action.set_ylim(-0.2, 1.2)
+            self.parent_action.title.set_text("Parent Action")
+            self.parent_action.plot(self.parent_action_data, color = "brown", linewidth = 2)
+            self.parent_action.get_xaxis().set_visible(False)
+            self.child_action.clear()
+            self.child_action.set_xlim(0,1000)
+            self.child_action.set_ylim(-0.2, 1.2)
+            self.child_action.title.set_text("Child Action")
+            self.child_action.plot(self.child_action_data, color = "red", linewidth = 2)
+            self.child_action.get_xaxis().set_visible(False)
+            self.child_need.clear()
+            self.child_need.set_xlim(0,1000)
+            self.child_need.set_ylim(-2,2)
+            self.child_need.title.set_text("Child need")
+            self.child_need.plot(self.child_need_data, color = "red", linewidth = 2)
+            self.child_need.get_xaxis().set_visible(False)
+            self.parent_need.clear()
+            self.parent_need.set_xlim(0,1000)
+            self.parent_need.set_ylim(-2,2)
+            self.parent_need.title.set_text("Parent need")
+            self.parent_need.plot(self.parent_need_data, color = "brown", linewidth = 2)
+            self.parent_need.get_xaxis().set_visible(False)
             plt.pause(0.05)
             self.emotion.ambivalent = self.Am
             self.emotion.avoidant = self.Av
