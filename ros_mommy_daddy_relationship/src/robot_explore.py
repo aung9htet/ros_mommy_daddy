@@ -27,8 +27,8 @@ class RobotExplore:
         self.wall_distance = self.robot_range.range
         
         # set variables for project
-        self.speed = 5.0
-        self.min_wall = 0.12
+        self.speed = 0.2
+        self.min_wall = 0.105
         self.turn_angle = 0
         self.start_time = rospy.get_rostime()
         self.explore_robot = True
@@ -60,6 +60,7 @@ class RobotExplore:
     
     # to explore randomly around
     def explore(self):
+        print("DISTANCE!!!!!", self.robot_range.range)
         # get time elasped
         time_elasped = rospy.get_rostime().secs - self.start_time.secs
         # set maximum angle of turns to be 10 degrees
@@ -79,7 +80,7 @@ class RobotExplore:
                     self.angle_turn = (np.pi/2)/3 * 2
                 else:
                     self.angle_turn = -(np.pi/2)/3 * 2
-            self.robot_movement.set_move_cmd(linear=0, angular=self.angle_turn)
+            self.robot_movement.set_move_cmd(linear=0, angular=self.angle_turn * 2)
             self.robot_movement.vel_publish()
                 
     def exploration(self):

@@ -16,8 +16,18 @@ class NodeColorChange(object):
     # Making tail wag and ears move
     def set_color_cmd(self, red = 0.0, green = 0.0, blue = 0.0):
         self.color_change = UInt32MultiArray()
-        self.color_detail = [red, green, blue]
-        self.color_change.data = self.wag_detail
+        self.color_detail = (int(red), int(green), int(blue))
+        color = '0xFF%02x%02x%02x'%self.color_detail
+        rospy.loginfo('Color ' + color)
+        color = int(color, 16)
+        # color = color | (int(red) << 16)
+        self.color_change.data = [color,
+            color,
+            color,
+            color,
+            color,
+            color,
+        ]
 
     def pub_color(self):
         self.color_pub.publish(self.color_change)

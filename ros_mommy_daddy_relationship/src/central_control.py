@@ -38,10 +38,10 @@ class CentralControl:
         self.epsilonAm = self.emotion.avoidant
         self.a = 1.0
         self.c = 1.0
-        self.b = 0.5
+        self.b = 0.7
         self.dp = 0.0
         self.de = 0.0
-        self.h = 0.005
+        self.h = 0.01
         self.action.child = 0
         self.action.parent = 0
         self.action.emotional_distance = 0
@@ -56,11 +56,11 @@ class CentralControl:
 
         while not rospy.is_shutdown():
             self.time += self.h
-            rate = rospy.Rate(10)
+            rate = rospy.Rate(30)
 
             # set the avoidant and ambivalent
-            self.epsilonAv = self.emotion.ambivalent
-            self.epsilonAm = self.emotion.avoidant
+            self.epsilonAv = self.emotion.avoidant
+            self.epsilonAm = self.emotion.ambivalent
             
             # calculate physical distance (max = 1)
             child_position_x = self.robot_child.pos_x # Float
@@ -68,17 +68,19 @@ class CentralControl:
             parent_position_x = self.robot_parent.pos_x # Float
             parent_position_y = self.robot_parent.pos_y # Float
             self.dp = self.calculate_physical_distance(child_position_x, child_position_y, parent_position_x, parent_position_y)
+            self.dp = self.dp/10
+            rospy.loginfo(self.dp)
             if self.dp > 1:
                 self.dp = 1
 
             # calculate emotional distance (max = 1)
             child_sound = self.robot_child.robot_sound # Boolean
             parent_sound = self.robot_parent.robot_sound # Boolean
-            if parent_sound or child_sound:
-                if self.emotional_distance < 100:
-                    self.emotional_distance = 0
+            if parent_sound and child_sound:
+                rospy.loginfo('Sound received')
+                self.emotional_distance = 0
             else:
-                self.emotional_distance += (100-self.emotional_distance)*0.01 
+                self.emotional_distance += (100-self.emotional_distance)*0.005 
             self.de = self.emotional_distance/100
 
             calculated_need_accumulation = [self.dx1, self.dy1, self.dx2, self.dy2]
@@ -135,9 +137,9 @@ class CentralControl:
         xm = (x1 + x2)/2.0
         # Calculate needs and accumulated neds
         dx1 = -self.a*(4.0*self.c*x1**3 - 2.0*x1) - y1 
-        dy1 = self.b*x1- self.epsilonAm*(y2 + y1 + self.dp)  - self.epsilonAv*(y2 - y1 - self.de) 
+        dy1 = self.b*x1- self.epsilonAm*(y2 + y1 - self.dp)  - self.epsilonAv*(y2 - y1 - self.de) 
         dx2 = -self.a*(4.0*self.c*x2**3 - 2.0*x2) - y2
-        dy2 = self.b*x2  - self.epsilonAm*(y2 + y1 - self.dp)  - self.epsilonAv*(y2 - y1 - self.de)
+        dy2 = self.b*x2  - self.epsilonAm*(y2 + y1 + self.dp)  - self.epsilonAv*(y2 - y1 - self.de)
         return np.array([dx1, dy1, dx2, dy2])
     
 if __name__ == '__main__':

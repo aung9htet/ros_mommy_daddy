@@ -15,6 +15,7 @@ from subscribe_controller import ActionMiro
 from node_make_audio import NodeMakeAudio
 from node_wag_tail import NodeWagTail
 from ros_mommy_daddy_msg.msg import RobotPub
+from node_color_change import NodeColorChange
 
 class ParentNode:
 
@@ -34,6 +35,7 @@ class ParentNode:
         self.robot_odom = OdomMiro()
         self.robot_make_audio = NodeMakeAudio()
         self.robot_wag = NodeWagTail()
+        self.robot_color = NodeColorChange()
 
         # variables to use
         # 0 is to approach and 1 is to explore
@@ -57,28 +59,33 @@ class ParentNode:
             self.robot_pub.pos_x = self.robot_odom.posx
             self.robot_pub.pos_y = self.robot_odom.posy
 
+            # color change here
+            self.robot_color.set_color_cmd(red = self.sub_controller.emotional_distance*255.0, green = (1 - self.sub_controller.emotional_distance)*255.0)
+            self.robot_color.pub_color()
+
             # sound is not made at start
-            self.robot_pub.robot_sound = False
             rospy.loginfo(self.action)
             if self.action == 0:
                 rospy.loginfo("wagging")
                 # look for tag
-                if self.robot_found == False:
-                    self.robot_found = self.robot_locate_tag.loop()
-                # sound will start to be made and thus it is true
-                self.robot_pub.robot_sound = True
-                # produce sound
                 self.robot_make_audio.produce_sound(freq= 2000, volume=255, duration=25)
-                # get time for calculating sine graph
-                time_elasped = rospy.get_rostime().secs - self.start_time.secs
-                tail_value = np.sin((time_elasped*10)+((np.pi*2)/360))
-                # wag tail
-                self.robot_wag.set_wag_cmd(wag=tail_value)
-                self.robot_wag.pub_wag()
+                self.robot_pub.robot_sound = True
+                if self.robot_found == False:
+                    self.robot_found = self.robot_locate_tag.loop(0)
+                else:
+                    # sound will start to be made and thus it is true
+                    # produce sound
+                    # get time for calculating sine graph
+                    time_elasped = rospy.get_rostime().secs - self.start_time.secs
+                    tail_value = np.sin((time_elasped*10)+((np.pi*2)/360))
+                    # wag tail
+                    self.robot_wag.set_wag_cmd(wag=tail_value)
+                    self.robot_wag.pub_wag()
             else:
                 if explore_tag == False:
                     self.robot_found = False
                     # Exploration
+                    self.robot_explore.min_wall = 0.2
                     self.robot_explore.explore()
                     self.robot_pub.robot_sound = False
                 else:

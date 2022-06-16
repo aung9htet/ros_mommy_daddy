@@ -15,6 +15,7 @@ from subscribe_controller import ActionMiro
 from node_wag_tail import NodeWagTail
 from node_detect_audio import NodeDetectAudio
 from ros_mommy_daddy_msg.msg import RobotPub
+from node_color_change import NodeColorChange
 
 class ChildNode:
     
@@ -25,6 +26,7 @@ class ChildNode:
         self.child_pub = rospy.Publisher(
             topic_base_name + '/child_publisher', RobotPub, queue_size= 0
         )
+        
         self.robot_pub = RobotPub()
         # subscribe to central controller
         self.sub_controller = ActionMiro()
@@ -34,6 +36,7 @@ class ChildNode:
         self.robot_detect_audio = NodeDetectAudio()
         self.robot_wag = NodeWagTail()
         self.robot_found = False
+        self.robot_color = NodeColorChange()
 
         # variables to use
         # 0 is to approach and 1 is to explore
@@ -55,42 +58,32 @@ class ChildNode:
             self.robot_pub.pos_x = self.robot_odom.posx
             self.robot_pub.pos_y = self.robot_odom.posy
 
+            # color change here 
+            # if time_elasped % 0.5 <= 0.25:
+            self.robot_color.set_color_cmd(red = self.sub_controller.emotional_distance*255.0, green = (1 - self.sub_controller.emotional_distance)*255.0)
+            self.robot_color.pub_color()
+            
             # proceed on actions
             if self.action == 0:
-                # look for tag
-                if self.robot_found == False:
-                    self.robot_found = self.robot_locate_tag.loop()
                 # check if sound is received
                 self.robot_pub.robot_sound = self.detect_sound()
-                if self.robot_pub.robot_sound:
-                    self.robot_pub.robot_sound = True
-                else:
-                    self.robot_pub.robot_sound = False
-                # get time for calculating sine graph
-                time_elasped = rospy.get_rostime().secs - self.start_time.secs
-                tail_value = np.sin((time_elasped*10)+((np.pi*2)/360))
-                # wag tail
-                self.robot_wag.set_wag_cmd(wag=tail_value)
-                self.robot_wag.pub_wag()
+                # look for tag
+                if self.robot_found == False:
+                    self.robot_found = self.robot_locate_tag.loop(0)
+                if self.robot_pub.robot_sound == True:
+                    # get time for calculating sine graph
+                    time_elasped = rospy.get_rostime().secs - self.start_time.secs
+                    tail_value = np.sin((time_elasped*10)+((np.pi*2)/360))
+                    # wag tail
+                    self.robot_wag.set_wag_cmd(wag=tail_value)
+                    self.robot_wag.pub_wag()
             else:
-                if explore_tag == False:
-                    self.robot_found = False
-                    # Exploration
-                    self.robot_explore.explore()
-                    self.robot_pub.robot_sound = False
-                else:
-                    response = self.robot_explore.explore_tags()
-                    if response == True:
-                        # do something
-                        time_elasped = rospy.get_rostime().secs - self.start_time.secs
-                        while (time_elasped % 4) > 0:
-                            # get time for calculating sine graph
-                            time_elasped = rospy.get_rostime().secs - self.start_time.secs
-                            tail_value = np.sin((time_elasped*10)+((np.pi*2)/360))
-                            # wag tail
-                            self.robot_wag.set_wag_cmd(wag=tail_value)
-                            self.robot_wag.pub_wag()
-                        
+                self.robot_explore.min_wall = 0.11
+                self.robot_found = False
+                # Exploration
+                self.robot_explore.explore()
+                self.robot_pub.robot_sound = False
+
             # publish
             self.child_pub.publish(self.robot_pub)
             rospy.loginfo(os.getcwd())

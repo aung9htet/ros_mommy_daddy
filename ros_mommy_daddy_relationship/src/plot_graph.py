@@ -2,7 +2,9 @@
 
 # for plotting
 import matplotlib.pyplot as plt
+import matplotlib
 from matplotlib import style
+matplotlib.use('GTK3Agg')
 import cv2
 import numpy as np
 from matplotlib.widgets import Slider, Button
@@ -21,23 +23,26 @@ class PlotGraph:
 
         # for plot
         fig = plt.figure()
-        fig.suptitle('MiRos Strange Situation', fontweight="bold", fontsize=18)
-        self.path = "image/miro.png"
+        fig.suptitle('MiRo\'s Strange Situation', fontweight="bold", fontsize=18)
+        self.path = "/home/aljiro/miro.png"
         self.img = cv2.imread(self.path)
         self.miro_pic = fig.add_subplot(3,2,1)
         self.miro_pic.axis('off')
+        self.miro_pic.imshow(self.img)
         self.e_d_p_d = fig.add_subplot(3,2,2)
         self.e_d_p_d.title.set_text("Emotional and Physical Distance")
         self.e_d_p_d.set_ylim(0, 1)
         self.child_action = fig.add_subplot(3,2,3)
         self.child_action.title.set_text("Child Action")
         self.child_action.set_xlim(0,1000)
+        self.child_action.set_yticks([0, 1], labels = ('Approach', 'Explore'))
         self.child_action.get_xaxis().set_visible(False)
         self.parent_action = fig.add_subplot(3,2,4)
         self.parent_action.title.set_text("Parent Action")
         self.parent_action.set_xlim(0,1000)
         self.parent_action.set_ylim(-0.2, 1.2)
         self.parent_action.get_xaxis().set_visible(False)
+        
         self.child_need = fig.add_subplot(3,2,5)
         self.child_need.title.set_text("Child need")
         self.child_need.set_xlim(0,1000)
@@ -72,8 +77,8 @@ class PlotGraph:
         self.Am_slider = Slider(
             ax=self.axAm,
             label='Ambivalent',
-            valmin=0,
-            valmax=3,
+            valmin=-0.1,
+            valmax=2,
             valinit=self.Am,
         )
 
@@ -90,6 +95,8 @@ class PlotGraph:
         self.button = Button(resetax, 'Secure', hovercolor='0.975')
         # for subscribing
         self.sub_controller = ActionMiro()
+        
+        
     
     # reset event
     def reset(self, event):
@@ -127,6 +134,9 @@ class PlotGraph:
             data = {"Emotional Distance": self.pe, "Physical Distance": self.pd}
             distances = list(data.keys())
             values = list(data.values())
+            self.e_d_p_d.clear()
+            self.e_d_p_d.title.set_text("Emotional and Physical Distance")
+            self.e_d_p_d.set_ylim(0, 1)
             barlist = self.e_d_p_d.bar(distances, values, width = 0.4)
             barlist[0].set_color('maroon')
             barlist[1].set_color('blue')
@@ -154,10 +164,15 @@ class PlotGraph:
             self.parent_need.title.set_text("Parent need")
             self.parent_need.plot(self.parent_need_data, color = "brown", linewidth = 2)
             self.parent_need.get_xaxis().set_visible(False)
+
+            self.child_action.set_yticks([0, 1], labels = ('Approach', 'Explore'))
+            self.parent_action.set_yticks([0, 1], labels = ('Approach', 'Explore'))
             plt.pause(0.05)
             self.emotion.ambivalent = self.Am
             self.emotion.avoidant = self.Av
             self.emotion_controller_pub.publish(self.emotion)
+
+            
             rate.sleep()
 
 
