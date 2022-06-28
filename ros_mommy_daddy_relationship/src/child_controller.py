@@ -5,6 +5,7 @@ from ros_mommy_daddy_msg.msg import RobotPub # ROS child info subscriber
 
 class ChildMiro(object):
     
+    # update the child class with the messages being published
     def __init__(self):
         self.pos_x = 0
         self.pos_y = 0

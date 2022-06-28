@@ -49,27 +49,32 @@ class ChildNode:
         rospy.on_shutdown(self.save_file)
         self.tag = 3
 
+    # child actions to be taken
     def child_node(self, explore_tag = False):
-        while not rospy.is_shutdown():
-            rate = rospy.Rate(10)
 
-            # Update actions, odom
+        rate = rospy.Rate(10)
+
+        while not rospy.is_shutdown():
+
+            # Update actions and odom data
             self.action = self.sub_controller.child
             self.robot_pub.pos_x = self.robot_odom.posx
             self.robot_pub.pos_y = self.robot_odom.posy
 
-            # color change here 
-            # if time_elasped % 0.5 <= 0.25:
+            # change color of miro depending on the emotional distance
             self.robot_color.set_color_cmd(red = self.sub_controller.emotional_distance*255.0, green = (1 - self.sub_controller.emotional_distance)*255.0)
             self.robot_color.pub_color()
             
-            # proceed on actions
+            # proceed on actions, 0 is to approach the miros
             if self.action == 0:
-                # check if sound is received
+                # check if sound is received, will be upgraded with audio perception later
                 self.robot_pub.robot_sound = self.detect_sound()
+
                 # look for tag
                 if self.robot_found == False:
                     self.robot_found = self.robot_locate_tag.loop(0)
+                    
+                # when robot sound is detected
                 if self.robot_pub.robot_sound == True:
                     # get time for calculating sine graph
                     time_elasped = rospy.get_rostime().secs - self.start_time.secs
@@ -77,12 +82,16 @@ class ChildNode:
                     # wag tail
                     self.robot_wag.set_wag_cmd(wag=tail_value)
                     self.robot_wag.pub_wag()
+
+            # purpose is to explore when action is at 1
             else:
                 self.robot_explore.min_wall = 0.11
-                self.robot_found = False
                 # Exploration
                 self.robot_explore.explore()
+
+                # Reset the robot being found/ robot sound being detected
                 self.robot_pub.robot_sound = False
+                self.robot_found = False
 
             # publish
             self.child_pub.publish(self.robot_pub)
@@ -97,7 +106,7 @@ class ChildNode:
 
             rate.sleep()
 
-
+    # sound detection, to be upgraded with audio perception later
     def detect_sound(self):
         if self.robot_detect_audio.freq > 2000:
             return True

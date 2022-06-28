@@ -21,36 +21,49 @@ class PlotGraph:
         rospy.init_node('child_node')
         rate = rospy.Rate(10)
 
-        # for plot
+        # diagram for plotting, the shape of the plot design and data limit for plot
         fig = plt.figure()
         fig.suptitle('MiRo\'s Strange Situation', fontweight="bold", fontsize=18)
         self.path = "/home/aljiro/miro.png"
         self.img = cv2.imread(self.path)
+
+        # miro picture
         self.miro_pic = fig.add_subplot(3,2,1)
         self.miro_pic.axis('off')
         self.miro_pic.imshow(self.img)
+
+        # emotional and physical distance
         self.e_d_p_d = fig.add_subplot(3,2,2)
         self.e_d_p_d.title.set_text("Emotional and Physical Distance")
         self.e_d_p_d.set_ylim(0, 1)
+
+        # child action
         self.child_action = fig.add_subplot(3,2,3)
         self.child_action.title.set_text("Child Action")
         self.child_action.set_xlim(0,1000)
         self.child_action.set_yticks([0, 1], labels = ('Approach', 'Explore'))
         self.child_action.get_xaxis().set_visible(False)
+
+        # parent action
         self.parent_action = fig.add_subplot(3,2,4)
         self.parent_action.title.set_text("Parent Action")
         self.parent_action.set_xlim(0,1000)
         self.parent_action.set_ylim(-0.2, 1.2)
         self.parent_action.get_xaxis().set_visible(False)
-        
+
+        # child need
         self.child_need = fig.add_subplot(3,2,5)
         self.child_need.title.set_text("Child need")
         self.child_need.set_xlim(0,1000)
         self.child_need.get_xaxis().set_visible(False)
+
+        # parent need
         self.parent_need = fig.add_subplot(3,2,6)
         self.parent_need.title.set_text("Parent need")
         self.parent_need.set_xlim(0,1000)
         self.parent_need.get_xaxis().set_visible(False)
+
+        # initialising data for plotting
         self.child_action_data = []
         self.parent_action_data = []
         self.child_need_data = []
@@ -111,11 +124,14 @@ class PlotGraph:
     def animate(self):
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
+
             # append data
             self.Am_slider.on_changed(self.update)
             self.Av_slider.on_changed(self.update)
             self.button.on_clicked(self.reset)
             self.child_action_data.append(float(self.sub_controller.child))
+
+            # use of fifo to manage data size
             if len(self.child_action_data) > 1000:
                 self.child_action_data.pop(0)
             self.parent_action_data.append(float(self.sub_controller.parent))
@@ -128,7 +144,7 @@ class PlotGraph:
             if len(self.parent_need_data) > 1000:
                 self.parent_need_data.pop(0)
 
-            #self.miro_pic.imshow(self.img)
+            # plot the graph and update them with newly updated data
             self.pe = float(self.sub_controller.emotional_distance)
             self.pd = float(self.sub_controller.physical_distance)
             data = {"Emotional Distance": self.pe, "Physical Distance": self.pd}
@@ -172,7 +188,6 @@ class PlotGraph:
             self.emotion.avoidant = self.Av
             self.emotion_controller_pub.publish(self.emotion)
 
-            
             rate.sleep()
 
 

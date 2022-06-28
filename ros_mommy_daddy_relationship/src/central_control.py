@@ -12,7 +12,7 @@ from parent_controller import ParentMiro
 from ros_mommy_daddy_msg.msg import Action
 from subscribe_emotion import EmotionMiro
 
-# focus will be set on processing the actions to be taken
+# focus will be set on processing the actions to be taken and publishing them
 class CentralControl:
 
     def __init__(self):

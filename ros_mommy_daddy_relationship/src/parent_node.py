@@ -43,28 +43,28 @@ class ParentNode:
         self.produce_sound = False
         self.robot_pub.pos_x = self.robot_odom.posx
         self.robot_pub.pos_y = self.robot_odom.posy
-        self.control_tail = 0
         self.start_time = rospy.get_rostime()
         self.robot_found = False
         self.odom_record = np.empty((0,3), float)
         rospy.on_shutdown(self.save_file)
 
     def parent_node(self, explore_tag = False):
-        rate = rospy.Rate(10)
 
+        rate = rospy.Rate(10)
         while not rospy.is_shutdown():            
-            # update actions, odom
-            self.control_tail += 1
+            # update actions and odometry 
             self.action = self.sub_controller.parent
             self.robot_pub.pos_x = self.robot_odom.posx
             self.robot_pub.pos_y = self.robot_odom.posy
 
-            # color change here
+            # color will change depending on emotional distance
             self.robot_color.set_color_cmd(red = self.sub_controller.emotional_distance*255.0, green = (1 - self.sub_controller.emotional_distance)*255.0)
             self.robot_color.pub_color()
 
             # sound is not made at start
             rospy.loginfo(self.action)
+
+            # action 0 is for approaching the target
             if self.action == 0:
                 rospy.loginfo("wagging")
                 # look for tag
@@ -81,13 +81,18 @@ class ParentNode:
                     # wag tail
                     self.robot_wag.set_wag_cmd(wag=tail_value)
                     self.robot_wag.pub_wag()
+            
+            # action 1 is for exploring
             else:
+                # for the robots to explore randomly
                 if explore_tag == False:
                     self.robot_found = False
                     # Exploration
                     self.robot_explore.min_wall = 0.2
                     self.robot_explore.explore()
                     self.robot_pub.robot_sound = False
+                
+                # for the robot to approach the exploration tags
                 else:
                     response = self.robot_explore.explore_tags()
                     if response == True:
